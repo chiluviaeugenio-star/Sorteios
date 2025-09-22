@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Sorteios com QR Code</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #4a00e0;
+            --secondary: #8e2de2;
+            --accent: #ff512f;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --money: #27ae60;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        nav {
+            background: var(--primary);
+            display: flex;
+            justify-content: center;
+            padding: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 15px;
+            border-radius: 5px;
+        }
+        
+        nav a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+        
+        @media (min-width: 992px) {
+            .content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border 0.3s ease;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        button {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        button.secondary {
+            background: var(--light);
+            color: var(--dark);
+            border: 1px solid #ddd;
+        }
+        
+        .qr-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        #qrcode {
+            display: inline-block;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            min-height: 180px;
+            min-width: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .ticket {
+            border: 2px dashed var(--primary);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            background: #f9f9ff;
+        }
+        
+        .ticket-header {
+            text-align: center;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        
+        .ticket-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .ticket-info div {
+            margin-bottom: 10px;
+        }
+        
+        .scanner-container {
+            position: relative;
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        #qr-video {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        #qr-canvas {
+            display: none;
+        }
+        
+        .scan-result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f0f9ff;
+            border-left: 4px solid var(--primary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #f1f1f1;
+            color: #555;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid var(--success);
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid var(--danger);
+        }
+        
+        .instructions {
+            background: #f9f9ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .badge-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .badge-warning {
+            background: var(--warning);
+            color: var(--dark);
+        }
+        
+        .export-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .export-options button {
+            flex: 1;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        .stat-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+        
+        .stat-card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .money-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--money);
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f0fdf4;
+            border-radius: 8px;
+            border: 1px dashed var(--money);
+        }
+        
+        .price-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .price-input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .currency-symbol {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--money);
+        }
+        
+        .financial-summary {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            margin: 20px 0;
+        }
+        
+        .financial-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .financial-item:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--money);
+        }
+        
+        .payment-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        
+        .paid {
+            background: var(--success);
+            color: white;
+        }
+        
+        .pending {
+            background: var(--warning);
+            color: var(--dark);
+        }
+        
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistema de Sorteios com QR Code</h1>
+            <p class="subtitle">Gere bilhetes com QR Codes funcionais</p>
+        </header>
+        
+        <nav>
+            <a href="#criar">Criar Sorteio</a>
+            <a href="#bilhetes">Gerar Bilhetes</a>
+            <a href="#validar">Validar Bilhetes</a>
+            <a href="#dados">Gerir Dados</a>
+        </nav>
+        
+        <div class="content">
+            <div>
+                <section id="criar" class="section">
+                    <h2>Criar Novo Sorteio</h2>
+                    <div class="form-group">
+                        <label for="sorteio-nome">Nome do Sorteio</label>
+                        <input type="text" id="sorteio-nome" placeholder="Ex: Sorteio de iPhone">
+                    </div>
+                    <div class="form-group">
+                        <label for="sorteio-data">Data do Sorteio</label>
+                        <input type="date" id="sorteio-data">
+                    </div>
+                    <div class="form-group">
+                        <label for="sorteio-desc">Descrição e Regras</label>
+                        <textarea id="sorteio-desc" rows="3" placeholder="Descreva as regras do sorteio"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="bilhetes-quantidade">Quantidade de Bilhetes</label>
+                        <input type="number" id="bilhetes-quantidade" min="1" value="100" onchange="calcularValorTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label for="preco-bilhete-sorteio">Preço por Bilhete (Kz)</label>
+                        <div class="price-input-container">
+                            <span class="currency-symbol">Kz</span>
+                            <input type="number" id="preco-bilhete-sorteio" min="0" step="100" placeholder="0,00" onchange="calcularValorTotal()">
+                        </div>
+                    </div>
+                    
+                    <div class="price-section">
+                        <h3>Valor Total do Sorteio</h3>
+                        <div class="money-display">
+                            <span id="valor-total-sorteio">Kz 0,00</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="criarSorteio()">Criar Sorteio</button>
+                    <div id="alert-criar" class="alert"></div>
+                </section>
+                
+                <section id="validar" class="section">
+                    <h2>Validar Bilhetes</h2>
+                    <p>Use a câmera para ler o código QR do bilhete</p>
+                    <div class="scanner-container">
+                        <video id="qr-video" playsinline></video>
+                        <canvas id="qr-canvas" hidden></canvas>
+                    </div>
+                    <button onclick="toggleScanner()" id="scanner-btn">Iniciar Scanner</button>
+                    <div class="scan-result">
+                        <h3>Resultado da Validação</h3>
+                        <p id="scan-result-text">Nenhum código escaneado ainda</p>
+                    </div>
+                </section>
+            </div>
+            
+            <div>
+                <section id="bilhetes" class="section">
+                    <h2>Gerar Bilhetes</h2>
+                    
+                    <div class="form-group">
+                        <label for="bilhete-numero">Número do Bilhete</label>
+                        <input type="text" id="bilhete-numero" placeholder="Ex: 001">
+                    </div>
+                    <div class="form-group">
+                        <label for="bilhete-nome">Nome do Participante</label>
+                        <input type="text" id="bilhete-nome" placeholder="Nome do participante">
+                    </div>
+                    <div class="form-group">
+                        <label for="bilhete-telefone">Telefone</label>
+                        <input type="text" id="bilhete-telefone" placeholder="Telefone para contacto">
+                    </div>
+                    <div class="form-group">
+                        <label for="bilhete-email">Email (opcional)</label>
+                        <input type="email" id="bilhete-email" placeholder="Email do participante">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bilhete-pago">Status de Pagamento</label>
+                        <select id="bilhete-pago">
+                            <option value="pago">Pago</option>
+                            <option value="pendente">Pendente</option>
+                        </select>
+                    </div>
+                    
+                    <div class="money-display">
+                        Preço: <span id="preco-bilhete-display">Kz 0,00</span>
+                    </div>
+                    
+                    <button onclick="gerarBilhete()">Gerar Bilhete com QR Code</button>
+                    <div id="alert-bilhete" class="alert"></div>
+                    
+                    <div id="bilhete-gerado" class="ticket" style="display: none;">
+                        <div class="ticket-header">
+                            <h3>Bilhete para Sorteio</h3>
+                        </div>
+                        <div class="qr-container">
+                            <div id="qrcode"><span class="loading">QR Code será gerado aqui...</span></div>
+                        </div>
+                        <div class="ticket-info">
+                            <div><strong>Número:</strong> <span id="ticket-numero"></span></div>
+                            <div><strong>Nome:</strong> <span id="ticket-nome"></span></div>
+                            <div><strong>Telefone:</strong> <span id="ticket-telefone"></span></div>
+                            <div><strong>Email:</strong> <span id="ticket-email"></span></div>
+                            <div><strong>Sorteio:</strong> <span id="ticket-sorteio"></span></div>
+                            <div><strong>Data:</strong> <span id="ticket-data"></span></div>
+                            <div><strong>Valor:</strong> <span id="ticket-valor"></span></div>
+                            <div><strong>Status:</strong> <span id="ticket-status"></span></div>
+                        </div>
+                        <div class="export-options">
+                            <button onclick="imprimirBilhete()">Imprimir Bilhete</button>
+                            <button onclick="downloadQRCode()" class="secondary">Download QR Code</button>
+                        </div>
+                    </div>
+                </section>
+                
+                <section id="dados" class="section">
+                    <h2>Gerir Dados <span class="badge badge-success" id="total-bilhetes">0 bilhetes</span></h2>
+                    
+                    <div class="stats">
+                        <div class="stat-card">
+                            <h3 id="stat-total">0</h3>
+                            <p>Bilhetes Totais</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="stat-validados">0</h3>
+                            <p>Bilhetes Validados</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="stat-pagos">0</h3>
+                            <p>Bilhetes Pagos</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="stat-pendentes">0</h3>
+                            <p>Bilhetes Pendentes</p>
+                        </div>
+                    </div>
+                    
+                    <div class="financial-summary">
+                        <h3>Resumo Financeiro</h3>
+                        <div class="financial-item">
+                            <span>Total de Bilhetes Vendidos:</span>
+                            <span id="total-bilhetes-vendidos">0</span>
+                        </div>
+                        <div class="financial-item">
+                            <span>Valor por Bilhete:</span>
+                            <span id="valor-bilhete">Kz 0,00</span>
+                        </div>
+                        <div class="financial-item">
+                            <span>Total Arrecadado:</span>
+                            <span id="total-arrecadado">Kz 0,00</span>
+                        </div>
+                        <div class="financial-item">
+                            <span>Total a Arrecadar:</span>
+                            <span id="total-arrecadar">Kz 0,00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Exportar/Importar Dados</label>
+                        <div class="export-options">
+                            <button onclick="exportarDados()">Exportar Dados</button>
+                            <button onclick="document.getElementById('import-input').click()" class="secondary">Importar Dados</button>
+                            <input type="file" id="import-input" accept=".json" style="display: none;" onchange="importarDados(this.files[0])">
+                        </div>
+                    </div>
+                    
+                    <button onclick="limparDados()" style="background: var(--danger);">Limpar Todos os Dados</button>
+                </section>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2023 Sistema de Sorteios com QR Code. Funciona 100% no navegador - sem servidor necessário.</p>
+            <p>Hospede gratuitamente no GitHub Pages, Netlify ou Vercel.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Variáveis globais
+        let sorteioAtual = null;
+        let bilhetes = [];
+        let scannerAtivo = false;
+        let videoStream = null;
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarDados();
+            atualizarEstatisticas();
+            atualizarResumoFinanceiro();
+            
+            // Verificar se há um sorteio ativo
+            const sorteioSalvo = localStorage.getItem('sorteioAtual');
+            if (sorteioSalvo) {
+                sorteioAtual = JSON.parse(sorteioSalvo);
+                document.getElementById('sorteio-nome').value = sorteioAtual.nome || '';
+                document.getElementById('sorteio-data').value = sorteioAtual.data || '';
+                document.getElementById('sorteio-desc').value = sorteioAtual.descricao || '';
+                document.getElementById('bilhetes-quantidade').value = sorteioAtual.quantidade || 100;
+                document.getElementById('preco-bilhete-sorteio').value = sorteioAtual.preco || '';
+                
+                // Atualizar displays de preço
+                calcularValorTotal();
+                document.getElementById('preco-bilhete-display').textContent = formatarKz(sorteioAtual.preco || 0);
+            }
+        });
+        
+        // Carregar dados do localStorage
+        function carregarDados() {
+            const bilhetesSalvos = localStorage.getItem('bilhetes');
+            if (bilhetesSalvos) {
+                bilhetes = JSON.parse(bilhetesSalvos);
+            }
+        }
+        
+        // Salvar dados no localStorage
+        function salvarDados() {
+            localStorage.setItem('bilhetes', JSON.stringify(bilhetes));
+            if (sorteioAtual) {
+                localStorage.setItem('sorteioAtual', JSON.stringify(sorteioAtual));
+            }
+            atualizarEstatisticas();
+            atualizarResumoFinanceiro();
+        }
+        
+        // Atualizar estatísticas
+        function atualizarEstatisticas() {
+            const total = bilhetes.length;
+            const validados = bilhetes.filter(b => b.utilizado).length;
+            const pagos = bilhetes.filter(b => b.pago).length;
+            const pendentes = total - pagos;
+            
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-validados').textContent = validados;
+            document.getElementById('stat-pagos').textContent = pagos;
+            document.getElementById('stat-pendentes').textContent = pendentes;
+            document.getElementById('total-bilhetes').textContent = `${total} bilhetes`;
+        }
+        
+        // Atualizar resumo financeiro
+        function atualizarResumoFinanceiro() {
+            if (!sorteioAtual || !sorteioAtual.preco) return;
+            
+            const precoUnitario = parseFloat(sorteioAtual.preco) || 0;
+            const totalBilhetes = bilhetes.length;
+            const bilhetesPagos = bilhetes.filter(b => b.pago).length;
+            
+            const totalArrecadado = bilhetesPagos * precoUnitario;
+            const totalArrecadar = (totalBilhetes - bilhetesPagos) * precoUnitario;
+            
+            document.getElementById('total-bilhetes-vendidos').textContent = totalBilhetes;
+            document.getElementById('valor-bilhete').textContent = formatarKz(precoUnitario);
+            document.getElementById('total-arrecadado').textContent = formatarKz(totalArrecadado);
+            document.getElementById('total-arrecadar').textContent = formatarKz(totalArrecadar);
+        }
+        
+        // Calcular valor total do sorteio
+        function calcularValorTotal() {
+            const quantidade = parseInt(document.getElementById('bilhetes-quantidade').value) || 0;
+            const precoUnitario = parseFloat(document.getElementById('preco-bilhete-sorteio').value) || 0;
+            const valorTotal = quantidade * precoUnitario;
+            
+            document.getElementById('valor-total-sorteio').textContent = formatarKz(valorTotal);
+        }
+        
+        // Criar um novo sorteio
+        function criarSorteio() {
+            const nome = document.getElementById('sorteio-nome').value;
+            const data = document.getElementById('sorteio-data').value;
+            const descricao = document.getElementById('sorteio-desc').value;
+            const quantidade = document.getElementById('bilhetes-quantidade').value;
+            const preco = document.getElementById('preco-bilhete-sorteio').value;
+            
+            if (!nome || !data) {
+                showAlert('alert-criar', 'Por favor, preencha pelo menos o nome e a data do sorteio.', 'error');
+                return;
+            }
+            
+            sorteioAtual = {
+                nome,
+                data,
+                descricao,
+                quantidade,
+                preco
+            };
+            
+            // Salvar no localStorage
+            salvarDados();
+            
+            // Atualizar display de preço
+            document.getElementById('preco-bilhete-display').textContent = formatarKz(preco);
+            
+            showAlert('alert-criar', 'Sorteio criado com sucesso! Agora você pode gerar bilhetes.', 'success');
+        }
+        
+        // Gerar bilhete com QR Code - VERSÃO CORRIGIDA
+        function gerarBilhete() {
+            if (!sorteioAtual) {
+                showAlert('alert-bilhete', 'Por favor, crie um sorteio primeiro.', 'error');
+                return;
+            }
+            
+            const numero = document.getElementById('bilhete-numero').value;
+            const nome = document.getElementById('bilhete-nome').value;
+            const telefone = document.getElementById('bilhete-telefone').value;
+            const email = document.getElementById('bilhete-email').value;
+            const pago = document.getElementById('bilhete-pago').value === 'pago';
+            const preco = parseFloat(sorteioAtual.preco) || 0;
+            
+            if (!numero) {
+                showAlert('alert-bilhete', 'Por favor, informe o número do bilhete.', 'error');
+                return;
+            }
+            
+            // Verificar se o número já existe
+            if (bilhetes.some(b => b.numero === numero && b.sorteio === sorteioAtual.nome)) {
+                showAlert('alert-bilhete', 'Já existe um bilhete com este número para este sorteio.', 'error');
+                return;
+            }
+            
+            // Gerar um ID único para o bilhete
+            const bilheteId = generateId();
+            
+            // Criar dados para o QR Code
+            const qrData = JSON.stringify({
+                id: bilheteId,
+                numero: numero,
+                nome: nome,
+                telefone: telefone,
+                email: email,
+                sorteio: sorteioAtual.nome,
+                data: sorteioAtual.data,
+                valor: preco,
+                pago: pago
+            });
+            
+            // Preencher informações do bilhete
+            document.getElementById('ticket-numero').textContent = numero;
+            document.getElementById('ticket-nome').textContent = nome || 'Não informado';
+            document.getElementById('ticket-telefone').textContent = telefone || 'Não informado';
+            document.getElementById('ticket-email').textContent = email || 'Não informado';
+            document.getElementById('ticket-sorteio').textContent = sorteioAtual.nome;
+            document.getElementById('ticket-data').textContent = formatarData(sorteioAtual.data);
+            document.getElementById('ticket-valor').textContent = formatarKz(preco);
+            document.getElementById('ticket-status').innerHTML = pago ? 
+                '<span style="color: green;">Pago</span>' : 
+                '<span style="color: red;">Pendente</span>';
+            
+            // Exibir bilhete
+            document.getElementById('bilhete-gerado').style.display = 'block';
+            
+            // CORREÇÃO: Gerar QR Code de forma correta
+            const qrcodeDiv = document.getElementById('qrcode');
+            qrcodeDiv.innerHTML = ''; // Limpar conteúdo anterior
+            
+            // Usar a API correta da biblioteca QRCode
+            QRCode.toCanvas(qrData, {
+                width: 160,
+                margin: 1,
+                color: {
+                    dark: '#4a00e0',
+                    light: '#ffffff'
+                }
+            }, function(err, canvas) {
+                if (err) {
+                    console.error('Erro ao gerar QR Code:', err);
+                    qrcodeDiv.innerHTML = '<p style="color: red;">Erro ao gerar QR Code</p>';
+                    return;
+                }
+                
+                // Adicionar o canvas ao DIV
+                qrcodeDiv.appendChild(canvas);
+            });
+            
+            // Salvar bilhete
+            const bilhete = {
+                id: bilheteId,
+                numero,
+                nome,
+                telefone,
+                email,
+                sorteio: sorteioAtual.nome,
+                dataSorteio: sorteioAtual.data,
+                dataCriacao: new Date().toISOString(),
+                valor: preco,
+                pago: pago,
+                utilizado: false
+            };
+            
+            bilhetes.push(bilhete);
+            salvarDados();
+            
+            showAlert('alert-bilhete', 'Bilhete gerado com sucesso!', 'success');
+        }
+        
+        // Alternar o scanner
+        function toggleScanner() {
+            if (scannerAtivo) {
+                pararScanner();
+            } else {
+                iniciarScanner();
+            }
+        }
+        
+        // Iniciar scanner de QR Code
+        function iniciarScanner() {
+            const video = document.getElementById("qr-video");
+            const scanResultText = document.getElementById("scan-result-text");
+            const scannerBtn = document.getElementById("scanner-btn");
+            
+            scannerAtivo = true;
+            scannerBtn.textContent = "Parar Scanner";
+            scannerBtn.style.background = "linear-gradient(to right, #ff512f, #dd2476)";
+            
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(function(stream) {
+                    videoStream = stream;
+                    video.srcObject = stream;
+                    video.setAttribute("playsinline", true);
+                    video.play();
+                    requestAnimationFrame(tick);
+                })
+                .catch(function(err) {
+                    console.error("Erro ao acessar a câmera: ", err);
+                    scanResultText.textContent = "Erro ao acessar a câmera: " + err.message;
+                    scannerAtivo = false;
+                    scannerBtn.textContent = "Iniciar Scanner";
+                    scannerBtn.style.background = "";
+                });
+            
+            function tick() {
+                if (!scannerAtivo) return;
+                
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    const canvasElement = document.getElementById("qr-canvas");
+                    const canvas = canvasElement.getContext("2d");
+                    
+                    canvasElement.height = video.videoHeight;
+                    canvasElement.width = video.videoWidth;
+                    canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+                    
+                    const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert",
+                    });
+                    
+                    if (code) {
+                        try {
+                            const data = JSON.parse(code.data);
+                            validarBilhete(data);
+                        } catch (e) {
+                            scanResultText.innerHTML = `<strong>Código QR inválido:</strong> Não é um bilhete de sorteio válido`;
+                        }
+                    }
+                }
+                
+                requestAnimationFrame(tick);
+            }
+        }
+        
+        // Parar scanner
+        function pararScanner() {
+            const video = document.getElementById("qr-video");
+            const scannerBtn = document.getElementById("scanner-btn");
+            
+            scannerAtivo = false;
+            scannerBtn.textContent = "Iniciar Scanner";
+            scannerBtn.style.background = "";
+            
+            if (videoStream) {
+                const tracks = videoStream.getTracks();
+                tracks.forEach(track => track.stop());
+                video.srcObject = null;
+                videoStream = null;
+            }
+        }
+        
+        // Validar bilhete escaneado
+        function validarBilhete(data) {
+            const scanResultText = document.getElementById("scan-result-text");
+            const bilhete = bilhetes.find(b => b.id === data.id);
+            
+            if (!bilhete) {
+                scanResultText.innerHTML = `<strong>Bilhete inválido:</strong> Não encontrado no sistema`;
+                return;
+            }
+            
+            if (bilhete.utilizado) {
+                scanResultText.innerHTML = `<strong>Bilhete já utilizado:</strong> Nº ${bilhete.numero} - ${bilhete.nome || 'Sem nome'}`;
+                return;
+            }
+            
+            // Marcar bilhete como utilizado
+            bilhete.utilizado = true;
+            bilhete.dataUtilizacao = new Date().toISOString();
+            salvarDados();
+            
+            scanResultText.innerHTML = `
+                <strong>Bilhete válido!</strong><br>
+                <strong>Número:</strong> ${bilhete.numero}<br>
+                <strong>Nome:</strong> ${bilhete.nome || 'Não informado'}<br>
+                <strong>Valor:</strong> ${formatarKz(bilhete.valor)}<br>
+                <strong>Status Pagamento:</strong> ${bilhete.pago ? 'Pago' : 'Pendente'}<br>
+                <strong style="color: green;">Bilhete validado com sucesso!</strong>
+            `;
+            
+            // Parar o scanner após validar com sucesso
+            setTimeout(pararScanner, 3000);
+        }
+        
+        // Imprimir bilhete
+        function imprimirBilhete() {
+            const conteudo = document.getElementById('bilhete-gerado').innerHTML;
+            const janelaImpressao = window.open('', '_blank');
+            janelaImpressao.document.write(`
+                <html>
+                    <head>
+                        <title>Imprimir Bilhete</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            .ticket { border: 2px dashed #4a00e0; border-radius: 10px; padding: 20px; max-width: 400px; margin: 0 auto; }
+                            .ticket-header { text-align: center; margin-bottom: 15px; color: #4a00e0; }
+                            .ticket-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+                            .ticket-info div { margin-bottom: 10px; }
+                            @media print {
+                                button { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body onload="window.print()">
+                        ${conteudo}
+                    </body>
+                </html>
+            `);
+            janelaImpressao.document.close();
+        }
+        
+        // Download do QR Code
+        function downloadQRCode() {
+            const canvas = document.querySelector("#qrcode canvas");
+            if (!canvas) {
+                alert('Gere um bilhete primeiro para fazer download do QR Code.');
+                return;
+            }
+            
+            const url = canvas.toDataURL("image/png");
+            const link = document.createElement("a");
+            link.download = `bilhete-${document.getElementById('ticket-numero').textContent}.png`;
+            link.href = url;
+            link.click();
+        }
+        
+        // Exportar dados
+        function exportarDados() {
+            const data = {
+                sorteio: sorteioAtual,
+                bilhetes: bilhetes,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `backup-sorteio-${new Date().toISOString().slice(0,10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+        
+        // Importar dados
+        function importarDados(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (data.sorteio) {
+                        sorteioAtual = data.sorteio;
+                        localStorage.setItem('sorteioAtual', JSON.stringify(sorteioAtual));
+                        
+                        // Preencher o formulário
+                        document.getElementById('sorteio-nome').value = sorteioAtual.nome || '';
+                        document.getElementById('sorteio-data').value = sorteioAtual.data || '';
+                        document.getElementById('sorteio-desc').value = sorteioAtual.descricao || '';
+                        document.getElementById('bilhetes-quantidade').value = sorteioAtual.quantidade || 100;
+                        document.getElementById('preco-bilhete-sorteio').value = sorteioAtual.preco || '';
+                        
+                        // Atualizar displays de preço
+                        calcularValorTotal();
+                        document.getElementById('preco-bilhete-display').textContent = formatarKz(sorteioAtual.preco || 0);
+                    }
+                    
+                    if (data.bilhetes && Array.isArray(data.bilhetes)) {
+                        bilhetes = data.bilhetes;
+                        localStorage.setItem('bilhetes', JSON.stringify(bilhetes));
+                    }
+                    
+                    atualizarEstatisticas();
+                    atualizarResumoFinanceiro();
+                    showAlert('alert-bilhete', 'Dados importados com sucesso!', 'success');
+                } catch (error) {
+                    console.error("Erro ao importar dados:", error);
+                    showAlert('alert-bilhete', 'Erro ao importar dados. O arquivo pode estar corrompido.', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        // Limpar todos os dados
+        function limparDados() {
+            if (confirm("Tem certeza que deseja limpar TODOS os dados? Esta ação não pode ser desfeita.")) {
+                localStorage.removeItem('sorteioAtual');
+                localStorage.removeItem('bilhetes');
+                sorteioAtual = null;
+                bilhetes = [];
+                
+                document.getElementById('sorteio-nome').value = '';
+                document.getElementById('sorteio-data').value = '';
+                document.getElementById('sorteio-desc').value = '';
+                document.getElementById('bilhetes-quantidade').value = '100';
+                document.getElementById('preco-bilhete-sorteio').value = '';
+                
+                document.getElementById('bilhete-gerado').style.display = 'none';
+                document.getElementById('valor-total-sorteio').textContent = 'Kz 0,00';
+                document.getElementById('preco-bilhete-display').textContent = 'Kz 0,00';
+                
+                atualizarEstatisticas();
+                atualizarResumoFinanceiro();
+                
+                showAlert('alert-bilhete', 'Todos os dados foram limpos com sucesso.', 'success');
+            }
+        }
+        
+        // Funções utilitárias
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+        
+        function formatarKz(valor) {
+            return `Kz ${parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+        
+        function formatarData(dataString) {
+            if (!dataString) return 'Não definida';
+            const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+            return new Date(dataString).toLocaleDateString('pt-BR', options);
+        }
+        
+        function showAlert(elementId, message, type) {
+            const alert = document.getElementById(elementId);
+            alert.textContent = message;
+            alert.className = type === 'success' ? 'alert alert-success' : 'alert alert-error';
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
